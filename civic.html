@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Civic Issue Reporting System</title>
+   
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f4f4;
+        }
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 20px;
+        }
+        .report-form, .dashboard {
+            background: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+            width: 300px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input, select, textarea, button {
+            margin-top: 5px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #notification {
+            margin-top: 10px;
+            color: green;
+        }
+        #filters {
+            margin-bottom: 10px;
+        }
+        #filters button {
+            margin-right: 5px;
+            background: #555;
+            color: white;
+        }
+        #filters button:hover {
+            background: #333;
+        }
+        .report-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        @media (max-width: 700px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Civic Issue Reporting</h1>
+    </header>
+
+    <div class="container">
+        <section class="report-form">
+            <h2>Report an Issue</h2>
+            <form id="reportForm">
+                <label for="issueType">Issue Type:</label>
+                <select id="issueType" required>
+                    <option value="">Select issue</option>
+                    <option value="Pothole">Pothole</option>
+                    <option value="Streetlight">Streetlight</option>
+                    <option value="Trash">Trash Overflow</option>
+                </select>
+
+                <label for="description">Description:</label>
+                <textarea id="description" rows="3" placeholder="Describe the issue..." required></textarea>
+
+                <label for="photo">Upload Photo:</label>
+                <input type="file" id="photo" accept="image/*" required />
+
+                <input type="hidden" id="location" />
+
+                <button type="submit">Submit Report</button>
+            </form>
+            <div id="notification"></div>
+        </section>
+
+        <section class="dashboard">
+            <h2>Admin Dashboard</h2>
+            <div id="filters">
+                <button onclick="filterReports('All')">All</button>
+                <button onclick="filterReports('Pothole')">Potholes</button>
+                <button onclick="filterReports('Streetlight')">Streetlights</button>
+                <button onclick="filterReports('Trash')">Trash Overflow</button>
+            </div>
+            <div id="reportList"></div>
+        </section>
+    </div>
+
+    <script>
+        let reports = [];
+
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            let issueType = document.getElementById('issueType').value;
+            let description = document.getElementById('description').value;
+            let photoFile = document.getElementById('photo').files[0];
+            let location = document.getElementById('location').value || "Location not available";
+
+            if (!issueType || !description || !photoFile) {
+                alert("Please fill all fields.");
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function() {
+                let report = {
+                    id: Date.now(),
+                    type: issueType,
+                    description: description,
+                    photo: reader.result,
+                    location: location,
+                    status: "Submitted"
+                };
+                reports.push(report);
+                displayReports(reports);
+                document.getElementById('notification').textContent = "Report submitted successfully!";
+                document.getElementById('reportForm').reset();
+            };
+            reader.readAsDataURL(photoFile);
+        });
+
+        // Get user location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('location').value = `Lat: ${position.coords.latitude.toFixed(4)}, Lon: ${position.coords.longitude.toFixed(4)}`;
+            });
+        }
+
+        function displayReports(reportArray) {
+            let list = document.getElementById('reportList');
+            list.innerHTML = "";
+            reportArray.forEach(report => {
+                let div = document.createElement('div');
+                div.className = "report-item";
+                div.innerHTML = `
+                    <h3>${report.type}</h3>
+                    <p>${report.description}</p>
+                    <img src="${report.photo}" alt="Report Image"/>
+                    <p><strong>Location:</strong> ${report.location}</p>
+                    <p><strong>Status:</strong> ${report.status}</p>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function filterReports(type) {
+            if (type === "All") {
+                displayReports(reports);
+            } else {
+                let filtered = reports.filter(report => report.type === type);
+                displayReports(filtered);
+            }
+        }
+    </script>
+</body>
+</html>
